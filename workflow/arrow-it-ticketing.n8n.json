@@ -44,7 +44,7 @@
         "toRecipients": "ganapathy@arrowpipes.com",
         "subject": "=New IT Ticket [{{ $json.ticketId }}] - {{ $json.category }} ({{ $json.priority }})",
         "bodyContent": "=<p>A new IT support ticket has been raised.</p><ul><li><b>Ticket ID:</b> {{ $json.ticketId }}</li><li><b>Raised by:</b> {{ $json.employeeName }} ({{ $json.employeeEmail }})</li><li><b>Department:</b> {{ $json.department }}</li><li><b>Location:</b> {{ $json.location }}</li><li><b>Category:</b> {{ $json.category }}</li><li><b>Priority:</b> {{ $json.priority }}</li></ul><p><b>Description:</b><br>{{ $json.description }}</p>",
-        "additionalFields": {}
+        "additionalFields": { "bodyContentType": "html" }
       },
       "id": "outlook1",
       "name": "Notify IT Team",
@@ -111,6 +111,7 @@
         "subject": "=New IT Ticket [{{ $json.ticketId }}] - {{ $json.category }} ({{ $json.priority }})",
         "bodyContent": "=<p>A new IT support ticket has been raised.</p><ul><li><b>Ticket ID:</b> {{ $json.ticketId }}</li><li><b>Raised by:</b> {{ $json.employeeName }} ({{ $json.employeeEmail }})</li><li><b>Department:</b> {{ $json.department }}</li><li><b>Location:</b> {{ $json.location }}</li><li><b>Category:</b> {{ $json.category }}</li><li><b>Priority:</b> {{ $json.priority }}</li></ul><p><b>Description:</b><br>{{ $json.description }}</p><p>Screenshot attached.</p>",
         "additionalFields": {
+          "bodyContentType": "html",
           "attachments": { "attachments": [{ "binaryPropertyName": "attachment" }] }
         }
       },
