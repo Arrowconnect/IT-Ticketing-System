@@ -3,7 +3,7 @@
   "nodes": [
     {
       "parameters": {
-        "jsCode": "const input = $input.first();\nconst item = input.json.body || input.json;\nconst ticketId = 'IT-' + Date.now();\nconst binary = input.binary || {};\nconst hasAttachment = !!binary.attachment;\n\nreturn [{\n  json: {\n    ticketId,\n    employeeName: item.employeeName,\n    employeeEmail: item.employeeEmail,\n    department: item.department,\n    location: item.location,\n    category: item.category,\n    priority: 'Unassigned',\n    description: item.description,\n    attachmentName: hasAttachment ? (binary.attachment.fileName || 'attachment') : '',\n    hasAttachment,\n    status: 'Open'\n  },\n  binary\n}];"
+        "jsCode": "const input = $input.first();\nconst item = input.json.body || input.json;\nconst ticketId = 'IT-' + Date.now();\nconst binaryIn = input.binary || {};\nconst keys = Object.keys(binaryIn);\nconst hasAttachment = keys.length > 0;\n\nlet binaryOut = {};\nlet attachmentName = '';\nif (hasAttachment) {\n  const first = binaryIn[keys[0]];\n  binaryOut = { attachment: first };\n  attachmentName = first.fileName || 'attachment';\n}\n\nreturn [{\n  json: {\n    ticketId,\n    employeeName: item.employeeName,\n    employeeEmail: item.employeeEmail,\n    department: item.department,\n    location: item.location,\n    category: item.category,\n    priority: 'Unassigned',\n    description: item.description,\n    attachmentName,\n    hasAttachment,\n    status: 'Open'\n  },\n  binary: binaryOut\n}];"
       },
       "id": "code1",
       "name": "Prepare Ticket",
@@ -38,6 +38,17 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "notes": "Logs the ticket in the IT_Tickets data table"
+    },
+    {
+      "parameters": {
+        "jsCode": "// The Data Table node drops binary data and the hasAttachment/attachmentName\n// flags. Re-attach them from the Prepare Ticket output so the notification\n// email can include the uploaded screenshot.\nconst rows = $input.all();\nconst prepared = $('Prepare Ticket').all();\nreturn rows.map((row, i) => {\n  const p = prepared[i] || prepared[0];\n  return {\n    json: {\n      ...row.json,\n      hasAttachment: p.json.hasAttachment,\n      attachmentName: p.json.attachmentName\n    },\n    binary: p.binary || {},\n    pairedItem: { item: i }\n  };\n});"
+      },
+      "id": "restoreattachment1",
+      "name": "Restore Attachment",
+      "position": [560, 40],
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "notes": "Re-attaches the uploaded file + flags that the Data Table node strips out"
     },
     {
       "parameters": {
@@ -214,7 +225,8 @@
   ],
   "connections": {
     "Prepare Ticket": { "main": [[{ "index": 0, "node": "Save Ticket", "type": "main" }]] },
-    "Save Ticket": { "main": [[{ "node": "Has Attachment?", "type": "main", "index": 0 }]] },
+    "Save Ticket": { "main": [[{ "node": "Restore Attachment", "type": "main", "index": 0 }]] },
+    "Restore Attachment": { "main": [[{ "node": "Has Attachment?", "type": "main", "index": 0 }]] },
     "Ticket Webhook": { "main": [[{ "node": "Prepare Ticket", "type": "main", "index": 0 }]] },
     "Notify IT Team": { "main": [[{ "node": "Respond to Frontend", "type": "main", "index": 0 }]] },
     "Has Attachment?": {
