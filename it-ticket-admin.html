@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IT Ticket Admin — Arrow Pipes &amp; Fittings</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Work+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1C1E22;
+    --steel:#585F6B;
+    --steel-light:#8A909B;
+    --paper:#F6F4F0;
+    --card:#FFFFFF;
+    --red:#C4272D;
+    --red-dark:#93191F;
+    --line:#E1DCD3;
+    --ok:#1E7A46;
+    --ok-bg:#EBF6EF;
+    --warn:#B5760A;
+    --warn-bg:#FBF1E1;
+    --info:#2A5FB0;
+    --info-bg:#EAF0FB;
+    --err:#C4272D;
+    --err-bg:#FCEEEE;
+    --font-display:'Barlow Condensed', sans-serif;
+    --font-body:'Work Sans', sans-serif;
+    --font-mono:'IBM Plex Mono', monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--font-body);
+    min-height:100vh;
+  }
+
+  /* ---------- Gate screen ---------- */
+  #gate{
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+  }
+  #gate .box{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:32px 28px;
+    max-width:360px;
+    width:100%;
+    text-align:center;
+  }
+  #gate .eyebrow{
+    font-family:var(--font-mono);
+    font-size:11px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--red);
+    margin:0 0 8px;
+    font-weight:600;
+  }
+  #gate h1{font-family:var(--font-display);font-size:26px;margin:0 0 6px;}
+  #gate p{font-size:13.5px;color:var(--steel);margin:0 0 20px;}
+  #gate input{
+    width:100%;
+    font-size:14.5px;
+    padding:11px 12px;
+    border:1px solid var(--line);
+    border-radius:7px;
+    background:var(--paper);
+    margin-bottom:12px;
+  }
+  #gate input:focus{outline:none;border-color:var(--red);background:var(--card);}
+  #gate button{
+    width:100%;
+    padding:12px 16px;
+    border:none;
+    border-radius:7px;
+    background:var(--red);
+    color:#fff;
+    font-weight:600;
+    font-size:14.5px;
+    cursor:pointer;
+  }
+  #gate button:hover{background:var(--red-dark);}
+  #gate .gate-err{font-size:12.5px;color:var(--err);margin-top:10px;display:none;}
+
+  /* ---------- Dashboard ---------- */
+  #dash{display:none;max-width:960px;margin:0 auto;padding:36px 20px 64px;}
+  .dash-header{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:16px;margin-bottom:22px;}
+  .dash-header .eyebrow{
+    font-family:var(--font-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--red);margin:0 0 6px;font-weight:600;
+  }
+  .dash-header h1{font-family:var(--font-display);font-size:30px;margin:0;}
+  .dash-actions{display:flex;gap:10px;align-items:center;}
+  .dash-actions select, .dash-actions button{
+    font-family:var(--font-body);
+    font-size:13px;
+    padding:8px 12px;
+    border:1px solid var(--line);
+    border-radius:7px;
+    background:var(--card);
+    color:var(--ink);
+    cursor:pointer;
+  }
+  .dash-actions button.refresh{background:var(--ink);color:#fff;border-color:var(--ink);}
+  .dash-actions button.logout{background:transparent;color:var(--steel);}
+
+  .empty, .loading, .load-err{
+    text-align:center;
+    padding:48px 20px;
+    color:var(--steel);
+    font-size:14px;
+  }
+  .load-err{color:var(--err);}
+
+  .ticket{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:20px 22px;
+    margin-bottom:14px;
+  }
+  .ticket-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:10px;}
+  .ticket-id{font-family:var(--font-mono);font-size:13px;font-weight:600;color:var(--ink);}
+  .ticket-when{font-size:11.5px;color:var(--steel-light);margin-top:2px;}
+  .badges{display:flex;gap:6px;flex-wrap:wrap;}
+  .badge{
+    font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;
+    text-transform:uppercase;letter-spacing:.03em;
+  }
+  .badge.status-open{background:var(--info-bg);color:var(--info);}
+  .badge.status-inprogress{background:var(--warn-bg);color:var(--warn);}
+  .badge.status-assigned{background:var(--warn-bg);color:var(--warn);}
+  .badge.status-resolved{background:var(--ok-bg);color:var(--ok);}
+  .badge.priority-low{background:#F0F1F3;color:var(--steel);}
+  .badge.priority-medium{background:var(--info-bg);color:var(--info);}
+  .badge.priority-high{background:var(--warn-bg);color:var(--warn);}
+  .badge.priority-critical{background:var(--err-bg);color:var(--err);}
+  .badge.priority-unassigned{background:#F0F1F3;color:var(--steel-light);}
+
+  .ticket-body{font-size:14px;color:var(--ink);margin-bottom:14px;}
+  .ticket-meta{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+    gap:10px 20px;font-size:12.5px;color:var(--steel);margin-bottom:12px;
+  }
+  .ticket-meta div b{color:var(--ink);font-weight:600;display:block;font-size:11px;text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px;}
+  .ticket-desc{
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:7px;
+    padding:12px 14px;
+    font-size:13.5px;
+    line-height:1.5;
+    white-space:pre-wrap;
+  }
+  .attachment-note{font-size:12px;color:var(--steel);margin-top:8px;}
+
+  .ticket-controls{
+    display:flex;gap:10px;align-items:center;flex-wrap:wrap;
+    padding-top:14px;margin-top:14px;border-top:1px dashed var(--line);
+  }
+  .ticket-controls label{font-size:11.5px;font-weight:600;color:var(--steel);margin-right:4px;}
+  .ticket-controls select{
+    font-family:var(--font-body);font-size:13px;padding:7px 10px;
+    border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink);
+  }
+  .ticket-controls button{
+    margin-left:auto;
+    font-family:var(--font-body);font-weight:600;font-size:13px;
+    padding:8px 16px;border:none;border-radius:6px;
+    background:var(--red);color:#fff;cursor:pointer;
+  }
+  .ticket-controls button:hover{background:var(--red-dark);}
+  .ticket-controls button:disabled{background:var(--steel-light);cursor:not-allowed;}
+  .save-note{font-size:11.5px;color:var(--ok);display:none;}
+  .save-note.show{display:inline;}
+</style>
+</head>
+<body>
+
+<div id="gate">
+  <div class="box">
+    <p class="eyebrow">Arrow Pipes &amp; Fittings FZCO</p>
+    <h1>IT Ticket Admin</h1>
+    <p>Enter the admin key to view and triage tickets.</p>
+    <input type="password" id="adminKeyInput" placeholder="Admin key" autocomplete="off">
+    <button id="gateSubmit">Enter</button>
+    <p class="gate-err" id="gateErr">That key didn't work — check it and try again.</p>
+  </div>
+</div>
+
+<div id="dash">
+  <div class="dash-header">
+    <div>
+      <p class="eyebrow">Arrow Pipes &amp; Fittings FZCO — IT Desk</p>
+      <h1>Ticket queue</h1>
+    </div>
+    <div class="dash-actions">
+      <select id="statusFilter">
+        <option value="">All statuses</option>
+        <option value="Open">Open</option>
+        <option value="In Progress">In Progress</option>
+        <option value="Assigned">Assigned</option>
+        <option value="Resolved">Resolved</option>
+      </select>
+      <button class="refresh" id="refreshBtn">Refresh</button>
+      <button class="logout" id="logoutBtn">Log out</button>
+    </div>
+  </div>
+
+  <div id="listArea">
+    <div class="loading">Loading tickets…</div>
+  </div>
+</div>
+
+<script>
+  // Update these once the workflow is active:
+  const LIST_URL = 'https://n8n.arrowpipes.site/webhook/it-tickets-list';
+  const UPDATE_URL = 'https://n8n.arrowpipes.site/webhook/it-tickets-update';
+
+  const gate = document.getElementById('gate');
+  const dash = document.getElementById('dash');
+  const adminKeyInput = document.getElementById('adminKeyInput');
+  const gateSubmit = document.getElementById('gateSubmit');
+  const gateErr = document.getElementById('gateErr');
+  const listArea = document.getElementById('listArea');
+  const statusFilter = document.getElementById('statusFilter');
+  const refreshBtn = document.getElementById('refreshBtn');
+  const logoutBtn = document.getElementById('logoutBtn');
+
+  const PRIORITIES = ['Unassigned','Low','Medium','High','Critical'];
+  const STATUSES = ['Open','In Progress','Assigned','Resolved'];
+
+  let allTickets = [];
+
+  function adminKey(){ return sessionStorage.getItem('itAdminKey') || ''; }
+
+  function badgeClass(prefix, value){
+    return prefix + '-' + (value || 'unassigned').toLowerCase().replace(/\s+/g, '');
+  }
+
+  function escapeHtml(str){
+    const d = document.createElement('div');
+    d.textContent = str == null ? '' : String(str);
+    return d.innerHTML;
+  }
+
+  function optionsFor(list, current){
+    return list.map(v => `<option value="${v}" ${v === current ? 'selected' : ''}>${v}</option>`).join('');
+  }
+
+  function renderTickets(){
+    const filtered = statusFilter.value
+      ? allTickets.filter(t => t.status === statusFilter.value)
+      : allTickets;
+
+    if(filtered.length === 0){
+      listArea.innerHTML = '<div class="empty">No tickets here yet.</div>';
+      return;
+    }
+
+    listArea.innerHTML = filtered.map(t => `
+      <div class="ticket" data-id="${escapeHtml(t.ticketId)}">
+        <div class="ticket-top">
+          <div>
+            <div class="ticket-id">${escapeHtml(t.ticketId)}</div>
+            <div class="ticket-when">${t.createdAt ? new Date(t.createdAt).toLocaleString() : ''}</div>
+          </div>
+          <div class="badges">
+            <span class="badge ${badgeClass('status', t.status)}">${escapeHtml(t.status || 'Open')}</span>
+            <span class="badge ${badgeClass('priority', t.priority)}">${escapeHtml(t.priority || 'Unassigned')}</span>
+          </div>
+        </div>
+
+        <div class="ticket-meta">
+          <div><b>Raised by</b>${escapeHtml(t.employeeName)}<br>${escapeHtml(t.employeeEmail)}</div>
+          <div><b>Department</b>${escapeHtml(t.department)}</div>
+          <div><b>Location</b>${escapeHtml(t.location)}</div>
+          <div><b>Category</b>${escapeHtml(t.category)}</div>
+        </div>
+
+        <div class="ticket-desc">${escapeHtml(t.description)}</div>
+        ${t.attachmentName ? `<div class="attachment-note">📎 Attachment sent with the notification email: ${escapeHtml(t.attachmentName)}</div>` : ''}
+
+        <div class="ticket-controls">
+          <label>Priority</label>
+          <select class="priority-select">${optionsFor(PRIORITIES, t.priority)}</select>
+          <label>Status</label>
+          <select class="status-select">${optionsFor(STATUSES, t.status)}</select>
+          <span class="save-note">Saved</span>
+          <button class="save-btn">Save</button>
+        </div>
+      </div>
+    `).join('');
+
+    listArea.querySelectorAll('.ticket').forEach(el => {
+      const ticketId = el.getAttribute('data-id');
+      const btn = el.querySelector('.save-btn');
+      const note = el.querySelector('.save-note');
+      btn.addEventListener('click', async () => {
+        note.classList.remove('show');
+        btn.disabled = true;
+        btn.textContent = 'Saving…';
+        const priority = el.querySelector('.priority-select').value;
+        const status = el.querySelector('.status-select').value;
+        try {
+          const res = await fetch(UPDATE_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-Admin-Key': adminKey() },
+            body: JSON.stringify({ ticketId, priority, status })
+          });
+          if(!res.ok) throw new Error('failed');
+          const t = allTickets.find(x => x.ticketId === ticketId);
+          if(t){ t.priority = priority; t.status = status; }
+          el.querySelector('.badges').innerHTML = `
+            <span class="badge ${badgeClass('status', status)}">${escapeHtml(status)}</span>
+            <span class="badge ${badgeClass('priority', priority)}">${escapeHtml(priority)}</span>`;
+          note.classList.add('show');
+        } catch(err){
+          alert("Couldn't save that update. Check your connection and try again.");
+        } finally {
+          btn.disabled = false;
+          btn.textContent = 'Save';
+        }
+      });
+    });
+  }
+
+  async function loadTickets(){
+    listArea.innerHTML = '<div class="loading">Loading tickets…</div>';
+    try {
+      const res = await fetch(LIST_URL, {
+        headers: { 'X-Admin-Key': adminKey() }
+      });
+      if(res.status === 401 || res.status === 403){
+        logout();
+        return;
+      }
+      if(!res.ok) throw new Error('Request failed with status ' + res.status);
+      allTickets = await res.json();
+      if(!Array.isArray(allTickets)) allTickets = [];
+      renderTickets();
+    } catch(err){
+      listArea.innerHTML = '<div class="load-err">Couldn\'t load tickets. Check your connection and try Refresh.</div>';
+    }
+  }
+
+  function enterDashboard(){
+    gate.style.display = 'none';
+    dash.style.display = 'block';
+    loadTickets();
+  }
+
+  function logout(){
+    sessionStorage.removeItem('itAdminKey');
+    dash.style.display = 'none';
+    gate.style.display = 'flex';
+    adminKeyInput.value = '';
+  }
+
+  gateSubmit.addEventListener('click', async () => {
+    const key = adminKeyInput.value.trim();
+    if(!key) return;
+    gateErr.style.display = 'none';
+    gateSubmit.disabled = true;
+    gateSubmit.textContent = 'Checking…';
+    try {
+      const res = await fetch(LIST_URL, { headers: { 'X-Admin-Key': key } });
+      if(res.status === 401 || res.status === 403){
+        gateErr.style.display = 'block';
+        return;
+      }
+      if(!res.ok) throw new Error('status ' + res.status);
+      sessionStorage.setItem('itAdminKey', key);
+      enterDashboard();
+    } catch(err){
+      gateErr.textContent = "Couldn't reach the ticket system — check your connection and try again.";
+      gateErr.style.display = 'block';
+    } finally {
+      gateSubmit.disabled = false;
+      gateSubmit.textContent = 'Enter';
+    }
+  });
+
+  adminKeyInput.addEventListener('keydown', e => { if(e.key === 'Enter') gateSubmit.click(); });
+  statusFilter.addEventListener('change', renderTickets);
+  refreshBtn.addEventListener('click', loadTickets);
+  logoutBtn.addEventListener('click', logout);
+
+  if(adminKey()){
+    enterDashboard();
+  }
+</script>
+
+</body>
+</html>

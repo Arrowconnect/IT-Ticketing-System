@@ -1,0 +1,232 @@
+{
+  "name": "Arrow Pipes - IT Ticketing System",
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "const input = $input.first();\nconst item = input.json.body || input.json;\nconst ticketId = 'IT-' + Date.now();\nconst binary = input.binary || {};\nconst hasAttachment = !!binary.attachment;\n\nreturn [{\n  json: {\n    ticketId,\n    employeeName: item.employeeName,\n    employeeEmail: item.employeeEmail,\n    department: item.department,\n    location: item.location,\n    category: item.category,\n    priority: 'Unassigned',\n    description: item.description,\n    attachmentName: hasAttachment ? (binary.attachment.fileName || 'attachment') : '',\n    hasAttachment,\n    status: 'Open'\n  },\n  binary\n}];"
+      },
+      "id": "code1",
+      "name": "Prepare Ticket",
+      "position": [224, 0],
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "notes": "Generates a unique ticket ID and sets initial status"
+    },
+    {
+      "parameters": {
+        "dataTableId": { "mode": "id", "value": "JzQhEIveeNkhauOD" },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "ticketId": "={{ $json.ticketId }}",
+            "employeeName": "={{ $json.employeeName }}",
+            "employeeEmail": "={{ $json.employeeEmail }}",
+            "department": "={{ $json.department }}",
+            "location": "={{ $json.location }}",
+            "category": "={{ $json.category }}",
+            "priority": "={{ $json.priority }}",
+            "description": "={{ $json.description }}",
+            "attachmentName": "={{ $json.attachmentName }}",
+            "status": "={{ $json.status }}"
+          }
+        },
+        "options": {}
+      },
+      "id": "datatable1",
+      "name": "Save Ticket",
+      "position": [448, 0],
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "notes": "Logs the ticket in the IT_Tickets data table"
+    },
+    {
+      "parameters": {
+        "toRecipients": "ganapathy@arrowpipes.com",
+        "subject": "=New IT Ticket [{{ $json.ticketId }}] - {{ $json.category }} ({{ $json.priority }})",
+        "bodyContent": "=<p>A new IT support ticket has been raised.</p><ul><li><b>Ticket ID:</b> {{ $json.ticketId }}</li><li><b>Raised by:</b> {{ $json.employeeName }} ({{ $json.employeeEmail }})</li><li><b>Department:</b> {{ $json.department }}</li><li><b>Location:</b> {{ $json.location }}</li><li><b>Category:</b> {{ $json.category }}</li><li><b>Priority:</b> {{ $json.priority }}</li></ul><p><b>Description:</b><br>{{ $json.description }}</p>",
+        "additionalFields": {}
+      },
+      "id": "outlook1",
+      "name": "Notify IT Team",
+      "position": [656, 128],
+      "type": "n8n-nodes-base.microsoftOutlook",
+      "typeVersion": 2,
+      "notes": "Uses the 'Microsoft Outlook account' credential in n8n"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "it-ticket-submit",
+        "responseMode": "responseNode",
+        "options": {
+          "binaryPropertyName": "attachment",
+          "responseHeaders": { "entries": [{ "name": "Access-Control-Allow-Origin", "value": "*" }] }
+        }
+      },
+      "id": "webhook1",
+      "name": "Ticket Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [0, 0],
+      "onError": "continueRegularOutput",
+      "notes": "Public endpoint the ticket form posts to"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"success\": true, \"ticketId\": $json.ticketId, \"message\": \"Ticket submitted successfully\" } }}",
+        "options": { "responseHeaders": { "entries": [{ "name": "Access-Control-Allow-Origin", "value": "*" }] } }
+      },
+      "id": "respond1",
+      "name": "Respond to Frontend",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [960, 128]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "conditions": [
+            {
+              "leftValue": "={{ $json.hasAttachment }}",
+              "operator": { "type": "boolean", "operation": "true", "singleValue": true },
+              "rightValue": "",
+              "id": "condition-1785237289054-6nb0nv6pd"
+            }
+          ],
+          "options": { "version": 2, "leftValue": "", "caseSensitive": true, "typeValidation": "strict" }
+        },
+        "options": {}
+      },
+      "id": "if1",
+      "name": "Has Attachment?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [672, -128]
+    },
+    {
+      "parameters": {
+        "toRecipients": "ganapathy@arrowpipes.com",
+        "subject": "=New IT Ticket [{{ $json.ticketId }}] - {{ $json.category }} ({{ $json.priority }})",
+        "bodyContent": "=<p>A new IT support ticket has been raised.</p><ul><li><b>Ticket ID:</b> {{ $json.ticketId }}</li><li><b>Raised by:</b> {{ $json.employeeName }} ({{ $json.employeeEmail }})</li><li><b>Department:</b> {{ $json.department }}</li><li><b>Location:</b> {{ $json.location }}</li><li><b>Category:</b> {{ $json.category }}</li><li><b>Priority:</b> {{ $json.priority }}</li></ul><p><b>Description:</b><br>{{ $json.description }}</p><p>Screenshot attached.</p>",
+        "additionalFields": {
+          "attachments": { "attachments": [{ "binaryPropertyName": "attachment" }] }
+        }
+      },
+      "id": "outlook2",
+      "name": "Notify IT Team (With Attachment)",
+      "type": "n8n-nodes-base.microsoftOutlook",
+      "typeVersion": 2,
+      "position": [880, -128],
+      "notes": "Uses the 'Microsoft Outlook account' credential in n8n"
+    },
+    {
+      "id": "webhooklist1",
+      "name": "List Tickets Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [0, 300],
+      "parameters": {
+        "authentication": "headerAuth",
+        "httpMethod": "GET",
+        "options": { "responseHeaders": { "entries": [{ "name": "Access-Control-Allow-Origin", "value": "*" }] } },
+        "path": "it-tickets-list",
+        "responseMode": "responseNode"
+      },
+      "notes": "Admin page calls this to load all tickets. Protected by header auth (IT Ticketing Admin Key)."
+    },
+    {
+      "id": "getickets1",
+      "name": "Get All Tickets",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [220, 300],
+      "parameters": {
+        "dataTableId": { "mode": "id", "value": "JzQhEIveeNkhauOD" },
+        "operation": "get",
+        "orderBy": true,
+        "orderByColumn": "createdAt",
+        "orderByDirection": "DESC",
+        "resource": "row",
+        "returnAll": true
+      }
+    },
+    {
+      "id": "respondlist1",
+      "name": "Respond Tickets List",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [440, 300],
+      "parameters": {
+        "options": { "responseHeaders": { "entries": [{ "name": "Access-Control-Allow-Origin", "value": "*" }] } },
+        "respondWith": "allIncomingItems"
+      }
+    },
+    {
+      "id": "webhookupdate1",
+      "name": "Update Ticket Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [0, 480],
+      "parameters": {
+        "authentication": "headerAuth",
+        "httpMethod": "POST",
+        "options": { "responseHeaders": { "entries": [{ "name": "Access-Control-Allow-Origin", "value": "*" }] } },
+        "path": "it-tickets-update",
+        "responseMode": "responseNode"
+      },
+      "notes": "Admin page calls this to set priority/status on a ticket. Protected by header auth (IT Ticketing Admin Key)."
+    },
+    {
+      "id": "applyupdate1",
+      "name": "Apply Ticket Update",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [220, 480],
+      "parameters": {
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": { "priority": "={{ $json.body.priority }}", "status": "={{ $json.body.status }}" }
+        },
+        "dataTableId": { "mode": "id", "value": "JzQhEIveeNkhauOD" },
+        "filters": {
+          "conditions": [{ "condition": "eq", "keyName": "ticketId", "keyValue": "={{ $json.body.ticketId }}" }]
+        },
+        "matchType": "allConditions",
+        "operation": "update",
+        "resource": "row"
+      }
+    },
+    {
+      "id": "respondupdate1",
+      "name": "Respond Update",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [440, 480],
+      "parameters": {
+        "options": { "responseHeaders": { "entries": [{ "name": "Access-Control-Allow-Origin", "value": "*" }] } },
+        "respondWith": "json",
+        "responseBody": "={{ { \"success\": true } }}"
+      }
+    }
+  ],
+  "connections": {
+    "Prepare Ticket": { "main": [[{ "index": 0, "node": "Save Ticket", "type": "main" }]] },
+    "Save Ticket": { "main": [[{ "node": "Has Attachment?", "type": "main", "index": 0 }]] },
+    "Ticket Webhook": { "main": [[{ "node": "Prepare Ticket", "type": "main", "index": 0 }]] },
+    "Notify IT Team": { "main": [[{ "node": "Respond to Frontend", "type": "main", "index": 0 }]] },
+    "Has Attachment?": {
+      "main": [
+        [{ "node": "Notify IT Team (With Attachment)", "type": "main", "index": 0 }],
+        [{ "node": "Notify IT Team", "type": "main", "index": 0 }]
+      ]
+    },
+    "Notify IT Team (With Attachment)": { "main": [[{ "node": "Respond to Frontend", "type": "main", "index": 0 }]] },
+    "List Tickets Webhook": { "main": [[{ "node": "Get All Tickets", "type": "main", "index": 0 }]] },
+    "Get All Tickets": { "main": [[{ "node": "Respond Tickets List", "type": "main", "index": 0 }]] },
+    "Update Ticket Webhook": { "main": [[{ "node": "Apply Ticket Update", "type": "main", "index": 0 }]] },
+    "Apply Ticket Update": { "main": [[{ "node": "Respond Update", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" }
+}

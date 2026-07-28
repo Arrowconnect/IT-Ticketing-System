@@ -1,0 +1,13 @@
+# OS / editor cruft
+Thumbs.db
+Desktop.ini
+.DS_Store
+*.swp
+.vscode/
+.idea/
+
+# Never commit secrets or credential exports
+*.secret
+*.env
+.env
+credentials*.json
