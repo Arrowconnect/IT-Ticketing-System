@@ -85,7 +85,7 @@
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ { \"success\": true, \"ticketId\": $json.ticketId, \"message\": \"Ticket submitted successfully\" } }}",
+        "responseBody": "={{ { \"success\": true, \"ticketId\": $('Prepare Ticket').first().json.ticketId, \"message\": \"Ticket submitted successfully\" } }}",
         "options": { "responseHeaders": { "entries": [{ "name": "Access-Control-Allow-Origin", "value": "*" }] } }
       },
       "id": "respond1",
