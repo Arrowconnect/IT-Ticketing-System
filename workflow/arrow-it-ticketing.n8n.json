@@ -51,6 +51,20 @@
     },
     {
       "parameters": {
+        "toRecipients": "={{ $json.employeeEmail }}",
+        "subject": "=We've received your IT ticket [{{ $json.ticketId }}]",
+        "bodyContent": "=<p>Hi {{ $json.employeeName }},</p><p>Thank you — we've received your IT support ticket and our team will get back to you soon.</p><ul><li><b>Ticket ID:</b> {{ $json.ticketId }}</li><li><b>Category:</b> {{ $json.category }}</li></ul><p>Please keep the ticket ID above for your reference. There's no need to reply to this message.</p><p>— Arrow Pipes &amp; Fittings IT Desk</p>",
+        "additionalFields": { "bodyContentType": "html" }
+      },
+      "id": "acknowledge1",
+      "name": "Acknowledge Employee",
+      "position": [820, 240],
+      "type": "n8n-nodes-base.microsoftOutlook",
+      "typeVersion": 2,
+      "notes": "Sends a simple confirmation to the employee who raised the ticket. No sensitive info. Uses the 'Microsoft Outlook account' credential in n8n."
+    },
+    {
+      "parameters": {
         "toRecipients": "IT@arrowpipes.com",
         "subject": "=New IT Ticket [{{ $json.ticketId }}] - {{ $json.category }} ({{ $json.priority }})",
         "bodyContent": "=<p>A new IT support ticket has been raised.</p><ul><li><b>Ticket ID:</b> {{ $json.ticketId }}</li><li><b>Raised by:</b> {{ $json.employeeName }} ({{ $json.employeeEmail }})</li><li><b>Department:</b> {{ $json.department }}</li><li><b>Category:</b> {{ $json.category }}</li><li><b>Priority:</b> {{ $json.priority }}</li></ul><p><b>Description:</b><br>{{ $json.description }}</p>",
@@ -225,7 +239,7 @@
   "connections": {
     "Prepare Ticket": { "main": [[{ "index": 0, "node": "Save Ticket", "type": "main" }]] },
     "Save Ticket": { "main": [[{ "node": "Restore Attachment", "type": "main", "index": 0 }]] },
-    "Restore Attachment": { "main": [[{ "node": "Has Attachment?", "type": "main", "index": 0 }]] },
+    "Restore Attachment": { "main": [[{ "node": "Has Attachment?", "type": "main", "index": 0 }, { "node": "Acknowledge Employee", "type": "main", "index": 0 }]] },
     "Ticket Webhook": { "main": [[{ "node": "Prepare Ticket", "type": "main", "index": 0 }]] },
     "Notify IT Team": { "main": [[{ "node": "Respond to Frontend", "type": "main", "index": 0 }]] },
     "Has Attachment?": {
