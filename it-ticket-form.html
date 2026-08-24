@@ -257,13 +257,56 @@
     color:var(--steel-light);
     text-align:center;
   }
+
+  /* Confirmation modal — guards against accidental / mistaken submissions */
+  .modal-overlay{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(28,30,34,0.55);
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    z-index:50;
+  }
+  .modal-overlay.show{display:flex;}
+  .modal{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:26px 26px 22px;
+    max-width:400px;
+    width:100%;
+    box-shadow:0 12px 40px rgba(28,30,34,0.18);
+  }
+  .modal h3{
+    font-family:var(--font-display);
+    font-size:22px;
+    margin:0 0 8px;
+    color:var(--ink);
+  }
+  .modal p{font-size:14px;color:var(--steel);margin:0 0 20px;line-height:1.5;}
+  .modal-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;}
+  .modal-actions button{
+    font-family:var(--font-body);
+    font-weight:600;
+    font-size:14px;
+    padding:11px 18px;
+    border-radius:7px;
+    cursor:pointer;
+    border:1px solid var(--line);
+  }
+  .btn-cancel{background:var(--paper);color:var(--ink);}
+  .btn-cancel:hover{background:#EEEAE2;}
+  .btn-confirm{background:var(--red);color:#fff;border-color:var(--red);}
+  .btn-confirm:hover{background:var(--red-dark);}
 </style>
 </head>
 <body>
 
 <header>
   <p class="eyebrow">Arrow Pipes &amp; Fittings FZCO — IT Desk</p>
-  <h1>Raise an IT support ticket</h1>
+  <h1>Raise a Ticket</h1>
   <p class="sub">Tell us what's going on and the IT team will pick it up. You'll get a ticket number to reference below.</p>
 </header>
 <div class="thread"></div>
@@ -311,15 +354,12 @@
       <label for="category">Issue category<span class="req">*</span></label>
       <select id="category" name="category">
         <option value="" disabled selected>Select…</option>
-        <option>IT / Hardware (desktop, laptop, printer, monitor, keyboard/mouse, CCTV, etc.)</option>
-        <option>Network / Connectivity (internet, Wi-Fi, LAN)</option>
-        <option>Biometrics / Attendance (fingerprint, device offline, enrollment, access card)</option>
-        <option>Software / Applications (installation, crashes, licensing, Outlook, MS Office, ERP)</option>
-        <option>Email & Communication (send/receive issues, mailbox storage, spam, Teams)</option>
-        <option>Access & Permissions (new accounts, password reset, folder/drive access)</option>
-        <option>Server / System (server down, file access, backup issues)</option>
-        <option>Telephone / EPABX (extension, call quality)</option>
-        <option>Others (free text for anything not listed)</option>
+        <option>Physical Condition • Damage</option>
+        <option>Network • Connectivity • Wi-Fi • Telephone</option>
+        <option>Software • E-mail • Spam</option>
+        <option>Access & Permission setup</option>
+        <option>Server • System Outage</option>
+        <option>Others</option>
       </select>
       <p class="error-text">Select a category.</p>
     </div>
@@ -347,7 +387,7 @@
   <div class="success" id="successPanel">
     <div class="check">✓</div>
     <h2>Ticket submitted</h2>
-    <p>The IT team has been notified by email. They'll reach out to you directly.</p>
+    <p>Thank you — your ticket has reached the IT team. We'll get back to you soon. Please keep the ticket number below for reference.</p>
     <div class="tag">
       <span class="label">Ticket ID</span>
       <span class="id" id="ticketIdOut">—</span>
@@ -356,6 +396,17 @@
     <a class="new-ticket" id="newTicketLink">Submit another ticket</a>
   </div>
 </main>
+
+<div class="modal-overlay" id="confirmModal" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+    <h3 id="confirmTitle">Submit this ticket?</h3>
+    <p>Please check your details are correct. Once you confirm, this ticket will be sent to the IT team.</p>
+    <div class="modal-actions">
+      <button type="button" class="btn-cancel" id="confirmCancel">Go back</button>
+      <button type="button" class="btn-confirm" id="confirmSend">Yes, submit</button>
+    </div>
+  </div>
+</div>
 
 <footer>Arrow Pipes &amp; Fittings FZCO · Internal IT Support</footer>
 
@@ -404,7 +455,15 @@
     return valid;
   }
 
-  form.addEventListener('submit', async (e) => {
+  const confirmModal = document.getElementById('confirmModal');
+  const confirmSend = document.getElementById('confirmSend');
+  const confirmCancel = document.getElementById('confirmCancel');
+
+  function openConfirm(){ confirmModal.classList.add('show'); }
+  function closeConfirm(){ confirmModal.classList.remove('show'); }
+
+  // Step 1: validate, then ask for confirmation before anything is sent.
+  form.addEventListener('submit', (e) => {
     e.preventDefault();
     clearErrors();
 
@@ -413,6 +472,18 @@
       formMsg.classList.add('show');
       return;
     }
+
+    openConfirm();
+  });
+
+  // Cancel paths — click "Go back", click outside the box, or press Esc.
+  confirmCancel.addEventListener('click', closeConfirm);
+  confirmModal.addEventListener('click', (e) => { if(e.target === confirmModal) closeConfirm(); });
+  document.addEventListener('keydown', (e) => { if(e.key === 'Escape') closeConfirm(); });
+
+  // Step 2: only send after the user confirms.
+  confirmSend.addEventListener('click', async () => {
+    closeConfirm();
 
     const payload = new FormData();
     payload.append('employeeName', form.employeeName.value.trim());
