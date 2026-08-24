@@ -3,7 +3,7 @@
   "nodes": [
     {
       "parameters": {
-        "jsCode": "const input = $input.first();\nconst item = input.json.body || input.json;\nconst ticketId = 'IT-' + Date.now();\nconst binaryIn = input.binary || {};\nconst keys = Object.keys(binaryIn);\nconst hasAttachment = keys.length > 0;\n\nlet binaryOut = {};\nlet attachmentName = '';\nif (hasAttachment) {\n  const first = binaryIn[keys[0]];\n  binaryOut = { attachment: first };\n  attachmentName = first.fileName || 'attachment';\n}\n\nreturn [{\n  json: {\n    ticketId,\n    employeeName: item.employeeName,\n    employeeEmail: item.employeeEmail,\n    department: item.department,\n    location: item.location,\n    category: item.category,\n    priority: 'Unassigned',\n    description: item.description,\n    attachmentName,\n    hasAttachment,\n    status: 'Open'\n  },\n  binary: binaryOut\n}];"
+        "jsCode": "const input = $input.first();\nconst item = input.json.body || input.json;\nconst ticketId = 'IT-' + Date.now();\nconst binaryIn = input.binary || {};\nconst keys = Object.keys(binaryIn);\nconst hasAttachment = keys.length > 0;\n\nlet binaryOut = {};\nlet attachmentName = '';\nif (hasAttachment) {\n  const first = binaryIn[keys[0]];\n  binaryOut = { attachment: first };\n  attachmentName = first.fileName || 'attachment';\n}\n\nreturn [{\n  json: {\n    ticketId,\n    employeeName: item.employeeName,\n    employeeEmail: item.employeeEmail,\n    department: item.department,\n    category: item.category,\n    priority: 'Unassigned',\n    description: item.description,\n    attachmentName,\n    hasAttachment,\n    status: 'Open'\n  },\n  binary: binaryOut\n}];"
       },
       "id": "code1",
       "name": "Prepare Ticket",
@@ -22,7 +22,6 @@
             "employeeName": "={{ $json.employeeName }}",
             "employeeEmail": "={{ $json.employeeEmail }}",
             "department": "={{ $json.department }}",
-            "location": "={{ $json.location }}",
             "category": "={{ $json.category }}",
             "priority": "={{ $json.priority }}",
             "description": "={{ $json.description }}",
@@ -54,7 +53,7 @@
       "parameters": {
         "toRecipients": "IT@arrowpipes.com",
         "subject": "=New IT Ticket [{{ $json.ticketId }}] - {{ $json.category }} ({{ $json.priority }})",
-        "bodyContent": "=<p>A new IT support ticket has been raised.</p><ul><li><b>Ticket ID:</b> {{ $json.ticketId }}</li><li><b>Raised by:</b> {{ $json.employeeName }} ({{ $json.employeeEmail }})</li><li><b>Department:</b> {{ $json.department }}</li><li><b>Location:</b> {{ $json.location }}</li><li><b>Category:</b> {{ $json.category }}</li><li><b>Priority:</b> {{ $json.priority }}</li></ul><p><b>Description:</b><br>{{ $json.description }}</p>",
+        "bodyContent": "=<p>A new IT support ticket has been raised.</p><ul><li><b>Ticket ID:</b> {{ $json.ticketId }}</li><li><b>Raised by:</b> {{ $json.employeeName }} ({{ $json.employeeEmail }})</li><li><b>Department:</b> {{ $json.department }}</li><li><b>Category:</b> {{ $json.category }}</li><li><b>Priority:</b> {{ $json.priority }}</li></ul><p><b>Description:</b><br>{{ $json.description }}</p>",
         "additionalFields": { "bodyContentType": "html" }
       },
       "id": "outlook1",
@@ -120,7 +119,7 @@
       "parameters": {
         "toRecipients": "IT@arrowpipes.com",
         "subject": "=New IT Ticket [{{ $json.ticketId }}] - {{ $json.category }} ({{ $json.priority }})",
-        "bodyContent": "=<p>A new IT support ticket has been raised.</p><ul><li><b>Ticket ID:</b> {{ $json.ticketId }}</li><li><b>Raised by:</b> {{ $json.employeeName }} ({{ $json.employeeEmail }})</li><li><b>Department:</b> {{ $json.department }}</li><li><b>Location:</b> {{ $json.location }}</li><li><b>Category:</b> {{ $json.category }}</li><li><b>Priority:</b> {{ $json.priority }}</li></ul><p><b>Description:</b><br>{{ $json.description }}</p><p>Screenshot attached.</p>",
+        "bodyContent": "=<p>A new IT support ticket has been raised.</p><ul><li><b>Ticket ID:</b> {{ $json.ticketId }}</li><li><b>Raised by:</b> {{ $json.employeeName }} ({{ $json.employeeEmail }})</li><li><b>Department:</b> {{ $json.department }}</li><li><b>Category:</b> {{ $json.category }}</li><li><b>Priority:</b> {{ $json.priority }}</li></ul><p><b>Description:</b><br>{{ $json.description }}</p><p>Screenshot attached.</p>",
         "additionalFields": {
           "bodyContentType": "html",
           "attachments": { "attachments": [{ "binaryPropertyName": "attachment" }] }

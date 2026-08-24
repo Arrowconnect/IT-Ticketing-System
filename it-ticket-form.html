@@ -131,6 +131,8 @@
     outline-offset:1px;
   }
   textarea{resize:vertical;min-height:96px;}
+  input[readonly]{background:#EFEDE8;color:var(--steel);cursor:not-allowed;}
+  input[readonly]:focus{border-color:var(--line);}
   select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='9'><path d='M1 1l6 6 6-6' stroke='%23585F6B' stroke-width='1.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");background-repeat:no-repeat;background-position:right 12px center;padding-right:34px;}
 
   .error-text{
@@ -316,38 +318,21 @@
 
     <div class="field" data-field="employeeName">
       <label for="employeeName">Your name<span class="req">*</span></label>
-      <input type="text" id="employeeName" name="employeeName" placeholder="e.g. Fatima Al Suwaidi" autocomplete="name">
-      <p class="error-text">Enter your name.</p>
+      <input type="text" id="employeeName" name="employeeName" list="employeeList" placeholder="Start typing your name…" autocomplete="off">
+      <datalist id="employeeList"></datalist>
+      <p class="error-text">Please pick your name from the list.</p>
     </div>
 
     <div class="field" data-field="employeeEmail">
       <label for="employeeEmail">Your email<span class="req">*</span></label>
-      <input type="email" id="employeeEmail" name="employeeEmail" placeholder="you@arrowpipes.com" autocomplete="email">
-      <p class="error-text">Enter a valid email address.</p>
+      <input type="email" id="employeeEmail" name="employeeEmail" placeholder="Auto-filled from your name" autocomplete="off" readonly>
+      <p class="error-text">Pick your name above so we can fill this in.</p>
     </div>
 
-    <div class="row">
-      <div class="field" data-field="department">
-        <label for="department">Department<span class="req">*</span></label>
-        <select id="department" name="department">
-          <option value="" disabled selected>Select…</option>
-          <option>IT</option>
-          <option>Sales</option>
-          <option>Finance</option>
-          <option>HR</option>
-          <option>Operations</option>
-          <option>Warehouse/Yard</option>
-          <option>Logistics</option>
-          <option>Management</option>
-          <option>Other</option>
-        </select>
-        <p class="error-text">Select your department.</p>
-      </div>
-      <div class="field" data-field="location">
-        <label for="location">Location<span class="req">*</span></label>
-        <input type="text" id="location" name="location" placeholder="Floor / cabin / area">
-        <p class="error-text">Enter your floor, cabin, or area.</p>
-      </div>
+    <div class="field" data-field="department">
+      <label for="department">Department<span class="req">*</span></label>
+      <input type="text" id="department" name="department" placeholder="Auto-filled from your name" autocomplete="off" readonly>
+      <p class="error-text">Pick your name above so we can fill this in.</p>
     </div>
 
     <div class="field" data-field="category">
@@ -410,6 +395,7 @@
 
 <footer>Arrow Pipes &amp; Fittings FZCO · Internal IT Support</footer>
 
+<script src="employees.js"></script>
 <script>
   // Point this at your n8n webhook. This currently targets the PRODUCTION path,
   // which only responds once the workflow is activated in n8n:
@@ -424,6 +410,29 @@
   const successPanel = document.getElementById('successPanel');
   const ticketIdOut = document.getElementById('ticketIdOut');
 
+  // --- Employee name auto-fill (data from employees.js) ---
+  const employees = Array.isArray(window.EMPLOYEES) ? window.EMPLOYEES : [];
+  const empByName = {};
+  const dataList = document.getElementById('employeeList');
+  employees.forEach(emp => {
+    empByName[emp.name.trim().toLowerCase()] = emp;
+    const opt = document.createElement('option');
+    opt.value = emp.name;
+    dataList.appendChild(opt);
+  });
+
+  const nameEl = form.elements['employeeName'];
+  const emailEl = form.elements['employeeEmail'];
+  const deptEl = form.elements['department'];
+
+  function applyEmployee(){
+    const emp = empByName[nameEl.value.trim().toLowerCase()];
+    emailEl.value = emp ? emp.email : '';
+    deptEl.value = emp ? emp.dept : '';
+  }
+  nameEl.addEventListener('input', applyEmployee);
+  nameEl.addEventListener('change', applyEmployee);
+
   function clearErrors(){
     form.querySelectorAll('.field.invalid').forEach(f => f.classList.remove('invalid'));
     formMsg.classList.remove('show');
@@ -432,15 +441,21 @@
 
   function validate(){
     let valid = true;
-    const required = ['employeeName','employeeEmail','department','location','category','description'];
-    required.forEach(name => {
+
+    // Name must be chosen from the employee list — this also fills email + department.
+    const emp = empByName[nameEl.value.trim().toLowerCase()];
+    if(!emp){
+      form.querySelector('[data-field="employeeName"]').classList.add('invalid');
+      valid = false;
+    } else {
+      emailEl.value = emp.email;
+      deptEl.value = emp.dept;
+    }
+
+    ['category','description'].forEach(name => {
       const el = form.elements[name];
       const fieldWrap = form.querySelector(`[data-field="${name}"]`);
-      let ok = el.value.trim().length > 0;
-      if(name === 'employeeEmail' && ok){
-        ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(el.value.trim());
-      }
-      if(!ok){
+      if(el.value.trim().length === 0){
         fieldWrap.classList.add('invalid');
         valid = false;
       }
@@ -489,7 +504,6 @@
     payload.append('employeeName', form.employeeName.value.trim());
     payload.append('employeeEmail', form.employeeEmail.value.trim());
     payload.append('department', form.department.value);
-    payload.append('location', form.location.value.trim());
     payload.append('category', form.category.value);
     payload.append('description', form.description.value.trim());
     if(form.attachment.files.length > 0){
